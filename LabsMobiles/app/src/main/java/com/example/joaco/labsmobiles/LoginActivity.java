@@ -10,6 +10,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.Console;
 
 public class LoginActivity extends AppCompatActivity {
@@ -17,6 +23,9 @@ public class LoginActivity extends AppCompatActivity {
     private EditText emailEdit;
     private EditText passwordEdit;
     SavePreferences savePreferences;
+
+    NetworkManager networkManager;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,6 +35,8 @@ public class LoginActivity extends AppCompatActivity {
         passwordEdit = (EditText) findViewById(R.id.password);
 
         savePreferences = SavePreferences.getInstance(this);
+
+        networkManager = NetworkManager.getInstance(this);
 
         Button login = (Button) findViewById(R.id.login);
         login.setOnClickListener(new View.OnClickListener() {
@@ -38,8 +49,24 @@ public class LoginActivity extends AppCompatActivity {
                 String email = emailEdit.getText().toString();
                 String password = passwordEdit.getText().toString();
 
-                savePreferences.saveData("email", email);
-                savePreferences.saveData("password", password);
+                try {
+                    networkManager.login(email, password, new Response.Listener<JSONObject>() {
+
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            getForms();
+                        }
+                    }, new Response.ErrorListener() {
+
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // TODO: Handle error
+                            System.out.println(error);
+                        }
+                    });
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
                 boolean cancel = false;
                 View focusView = null;
@@ -76,6 +103,23 @@ public class LoginActivity extends AppCompatActivity {
                     setResult(RESULT_OK, intent);
                     finish();
                 }
+            }
+        });
+    }
+    private void getForms(){
+        networkManager.getForms(new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+
+                System.out.println(response);
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // TODO: Handle error
+                System.out.println(error);
             }
         });
     }
